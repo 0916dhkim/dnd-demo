@@ -1,0 +1,10 @@
+{
+  "name": "dnd-demo",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.0.3",
+    "wrangler": "^3.15.0"
+  }
+}
