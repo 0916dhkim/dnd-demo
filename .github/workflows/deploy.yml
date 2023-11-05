@@ -32,4 +32,4 @@ jobs:
       - name: Deploy server
         run: flyctl deploy --remote-only
       - name: Deploy web
-        run: pnpm run --filter=@dnd-demo/web deploy
+        run: pnpm run --filter=@dnd-demo/web deploy --project-name=${{ secrets.CLOUDFLARE_PROJECT_NAME }}
