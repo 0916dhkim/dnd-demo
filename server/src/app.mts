@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import morgan from "morgan";
 import { sql, createPool } from "slonik";
 import dotenv from "dotenv";
@@ -19,6 +20,7 @@ const asyncHandler =
 
 export const app = express();
 app.use(morgan("short"));
+app.use(cors());
 
 app.get(
   "/api",

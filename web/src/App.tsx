@@ -8,7 +8,7 @@ function App() {
   const [hello, setHello] = useState("fetching");
 
   useEffect(() => {
-    fetch("/api")
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api`)
       .then((res) => res.text())
       .then(setHello);
   }, []);
