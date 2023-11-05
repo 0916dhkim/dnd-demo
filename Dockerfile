@@ -19,4 +19,5 @@ RUN pnpm i
 RUN pnpm --filter=@dnd-demo/server build
 
 EXPOSE 3000
-CMD node ./server/dist/index.js
+WORKDIR /app/server
+CMD pnpm node-pg-migrate up && node ./dist/index.js
