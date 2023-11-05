@@ -14,22 +14,22 @@ jobs:
     strategy:
       matrix:
         node-version: [20]
-      steps:
-        - uses: actions/checkout@v3
-        - uses: pnpm/action-setup@v2
-          with:
-            version: 8
-        - uses: actions/setup-node@v3
-          with:
-            node-version: ${{ matrix.node-version }}
-            cache: "pnpm"
-        - name: Use Fly.io
-          uses: superfly/flyctl-actions/setup-flyctl@master
-        - name: Install dependencies
-          run: pnpm install
-        - name: Build web
-          run: pnpm --filter=@dnd-demo/web build
-        - name: Deploy server
-          run: flyctl deploy --remote-only
-        - name: Deploy web
-          run: pnpm --filter=@dnd-demo/web deploy
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+      - name: Use Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build web
+        run: pnpm --filter=@dnd-demo/web build
+      - name: Deploy server
+        run: flyctl deploy --remote-only
+      - name: Deploy web
+        run: pnpm --filter=@dnd-demo/web deploy
