@@ -1,7 +1,10 @@
-import app = require("./app");
-
 const PORT = process.env.PORT ?? 3000;
 
-app.listen(PORT, () => {
-  console.log(`Listening to port ${PORT}...`);
-});
+async function main() {
+  const { app } = await import("./app.mjs");
+  app.listen(PORT, () => {
+    console.log(`Listening to port ${PORT}...`);
+  });
+}
+
+main();
