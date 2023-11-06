@@ -38,6 +38,9 @@ importers:
       slonik:
         specifier: ^37.2.0
         version: 37.2.0(zod@3.22.4)
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@types/cors':
         specifier: ^2.8.15
