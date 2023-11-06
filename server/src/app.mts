@@ -2,9 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import { sql, createPool } from "slonik";
-import dotenv from "dotenv";
 import type { Response, Request, RequestHandler } from "express";
-dotenv.config();
 
 const pool = await createPool(process.env.DATABASE_URL ?? "");
 
