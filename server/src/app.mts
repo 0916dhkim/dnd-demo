@@ -59,6 +59,7 @@ const asyncHandler =
 export const app = express();
 app.use(morgan("short"));
 app.use(cors());
+app.use(express.json());
 
 app.get(
   "/api",
@@ -102,5 +103,59 @@ app.get(
         },
       });
     });
+  })
+);
+
+app.post(
+  "/api/tasks",
+  asyncHandler(async (req, res) => {
+    const bodySchema = z.object({
+      afterId: z.string().nullish(),
+      title: z.string(),
+    });
+    const body = bodySchema.parse(req.body);
+
+    await pool.connect(async (db) => {
+      const rankOfTask = (id: string) =>
+        sql.unsafe`SELECT rank FROM task WHERE id = ${id}`;
+
+      if (body.afterId == null) {
+        const minRank = await db.maybeOneFirst(
+          sql.unsafe`SELECT MIN(rank) FROM task`
+        );
+        if (minRank == null) {
+          await db.query(
+            sql.unsafe`INSERT INTO task (title, rank) VALUES (${body.title}, 0.5)`
+          );
+        } else {
+          await db.query(
+            sql.unsafe`INSERT INTO task (title, rank) VALUES (${body.title}, (${minRank}) / 2.0)`
+          );
+        }
+      } else {
+        const adjacentId = await db.maybeOneFirst(
+          sql.unsafe`SELECT id FROM task WHERE rank > (${rankOfTask(
+            body.afterId
+          )}) ORDER BY rank ASC FETCH FIRST ROW ONLY`
+        );
+        if (adjacentId == null) {
+          await db.query(
+            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
+              body.title
+            }, (${rankOfTask(body.afterId)}) + 1)`
+          );
+        } else {
+          await db.query(
+            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
+              body.title
+            }, ((${rankOfTask(body.afterId)}) + (${rankOfTask(
+              adjacentId
+            )})) / 2)`
+          );
+        }
+      }
+    });
+
+    res.send("OK");
   })
 );
