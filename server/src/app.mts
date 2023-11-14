@@ -75,7 +75,7 @@ app.get(
   "/api/tasks",
   asyncHandler(async (req, res) => {
     const querySchema = z.object({
-      after: z.string().nullish(),
+      afterId: z.string().nullish(),
     });
     const query = querySchema.parse(req.query);
 
@@ -87,8 +87,8 @@ app.get(
         createdAt: z.number(),
       });
 
-      const whereFragment = query.after
-        ? sql.fragment`WHERE rank > ${query.after}`
+      const whereFragment = query.afterId
+        ? sql.fragment`WHERE rank > (SELECT rank FROM task WHERE id = ${query.afterId})`
         : sql.fragment``;
 
       const data = await db.query(
