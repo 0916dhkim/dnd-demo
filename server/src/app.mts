@@ -40,7 +40,7 @@ app.get(
 );
 
 app.post(
-  "/api/tasks",
+  "/api/tasks/create",
   asyncHandler(async (req, res) => {
     const bodySchema = z.object({
       beforeId: z.string().nullish(),
