@@ -13,6 +13,7 @@ import {
   type QueryResultRow,
 } from "slonik";
 import { z } from "zod";
+import { TaskService, taskSchema } from "./task.mjs";
 
 const createResultParserInterceptor = (): Interceptor => {
   return {
@@ -65,7 +66,7 @@ app.get(
   "/api",
   asyncHandler(async (req, res) => {
     await pool.connect(async (db) => {
-      const data = await db.query(sql.unsafe`SELECT * FROM task`);
+      const data = await db.query(sql.type(taskSchema)`SELECT * FROM task`);
       res.send(`There are ${data.rowCount} tasks.`);
     });
   })
@@ -80,28 +81,8 @@ app.get(
     const query = querySchema.parse(req.query);
 
     await pool.connect(async (db) => {
-      const taskSchema = z.object({
-        id: z.string().uuid(),
-        title: z.string(),
-        rank: z.number(),
-        createdAt: z.number(),
-      });
-
-      const whereFragment = query.afterId
-        ? sql.fragment`WHERE rank > (SELECT rank FROM task WHERE id = ${query.afterId})`
-        : sql.fragment``;
-
-      const data = await db.query(
-        sql.type(taskSchema)`SELECT * FROM task ${whereFragment} ORDER BY rank`
-      );
-
-      res.json({
-        data: data.rows,
-        pageInfo: {
-          hasNextPage: data.rowCount !== 0,
-          endCursor: data.rows[data.rowCount - 1]?.rank,
-        },
-      });
+      const taskService = TaskService(db);
+      res.json(await taskService.fetchPage(query.afterId));
     });
   })
 );
@@ -116,46 +97,8 @@ app.post(
     const body = bodySchema.parse(req.body);
 
     await pool.connect(async (db) => {
-      const rankOfTask = (id: string) =>
-        sql.unsafe`SELECT rank FROM task WHERE id = ${id}`;
-
-      if (body.beforeId == null) {
-        const maxTaskId = await db.maybeOneFirst(
-          sql.unsafe`SELECT id FROM task ORDER BY rank DESC FETCH FIRST ROW ONLY`
-        );
-        if (maxTaskId == null) {
-          await db.query(
-            sql.unsafe`INSERT INTO task (title, rank) VALUES (${body.title}, 0.5)`
-          );
-        } else {
-          await db.query(
-            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
-              body.title
-            }, (${rankOfTask(maxTaskId)}) + 1.0)`
-          );
-        }
-      } else {
-        const adjacentId = await db.maybeOneFirst(
-          sql.unsafe`SELECT id FROM task WHERE rank < (${rankOfTask(
-            body.beforeId
-          )}) ORDER BY rank DESC FETCH FIRST ROW ONLY`
-        );
-        if (adjacentId == null) {
-          await db.query(
-            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
-              body.title
-            }, (${rankOfTask(body.beforeId)}) / 2.0)`
-          );
-        } else {
-          await db.query(
-            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
-              body.title
-            }, ((${rankOfTask(body.beforeId)}) + (${rankOfTask(
-              adjacentId
-            )})) / 2)`
-          );
-        }
-      }
+      const taskService = TaskService(db);
+      await taskService.create(body);
     });
 
     res.send("OK");
