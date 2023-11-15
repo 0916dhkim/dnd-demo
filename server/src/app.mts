@@ -110,7 +110,7 @@ app.post(
   "/api/tasks",
   asyncHandler(async (req, res) => {
     const bodySchema = z.object({
-      afterId: z.string().nullish(),
+      beforeId: z.string().nullish(),
       title: z.string(),
     });
     const body = bodySchema.parse(req.body);
@@ -119,36 +119,38 @@ app.post(
       const rankOfTask = (id: string) =>
         sql.unsafe`SELECT rank FROM task WHERE id = ${id}`;
 
-      if (body.afterId == null) {
-        const minRank = await db.maybeOneFirst(
-          sql.unsafe`SELECT MIN(rank) FROM task`
+      if (body.beforeId == null) {
+        const maxTaskId = await db.maybeOneFirst(
+          sql.unsafe`SELECT id FROM task ORDER BY rank DESC FETCH FIRST ROW ONLY`
         );
-        if (minRank == null) {
+        if (maxTaskId == null) {
           await db.query(
             sql.unsafe`INSERT INTO task (title, rank) VALUES (${body.title}, 0.5)`
           );
         } else {
           await db.query(
-            sql.unsafe`INSERT INTO task (title, rank) VALUES (${body.title}, (${minRank}) / 2.0)`
+            sql.unsafe`INSERT INTO task (title, rank) VALUES (${
+              body.title
+            }, (${rankOfTask(maxTaskId)}) + 1.0)`
           );
         }
       } else {
         const adjacentId = await db.maybeOneFirst(
-          sql.unsafe`SELECT id FROM task WHERE rank > (${rankOfTask(
-            body.afterId
-          )}) ORDER BY rank ASC FETCH FIRST ROW ONLY`
+          sql.unsafe`SELECT id FROM task WHERE rank < (${rankOfTask(
+            body.beforeId
+          )}) ORDER BY rank DESC FETCH FIRST ROW ONLY`
         );
         if (adjacentId == null) {
           await db.query(
             sql.unsafe`INSERT INTO task (title, rank) VALUES (${
               body.title
-            }, (${rankOfTask(body.afterId)}) + 1)`
+            }, (${rankOfTask(body.beforeId)}) / 2.0)`
           );
         } else {
           await db.query(
             sql.unsafe`INSERT INTO task (title, rank) VALUES (${
               body.title
-            }, ((${rankOfTask(body.afterId)}) + (${rankOfTask(
+            }, ((${rankOfTask(body.beforeId)}) + (${rankOfTask(
               adjacentId
             )})) / 2)`
           );
