@@ -7,13 +7,12 @@ import express, {
 import morgan from "morgan";
 import {
   createPool,
-  sql,
   SchemaValidationError,
   type Interceptor,
   type QueryResultRow,
 } from "slonik";
 import { z } from "zod";
-import { TaskService, taskSchema } from "./task.mjs";
+import { TaskService } from "./task.mjs";
 
 const createResultParserInterceptor = (): Interceptor => {
   return {
@@ -61,16 +60,6 @@ export const app = express();
 app.use(morgan("short"));
 app.use(cors());
 app.use(express.json());
-
-app.get(
-  "/api",
-  asyncHandler(async (req, res) => {
-    await pool.connect(async (db) => {
-      const data = await db.query(sql.type(taskSchema)`SELECT * FROM task`);
-      res.send(`There are ${data.rowCount} tasks.`);
-    });
-  })
-);
 
 app.get(
   "/api/tasks",

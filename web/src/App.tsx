@@ -8,9 +8,9 @@ function App() {
   const [hello, setHello] = useState("fetching");
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/api`)
-      .then((res) => res.text())
-      .then(setHello);
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/tasks`)
+      .then((res) => res.json())
+      .then((body) => setHello(`There are ${body.data.length} tasks`));
   }, []);
 
   return (
