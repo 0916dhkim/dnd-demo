@@ -51,6 +51,10 @@ function TaskQueryBuilder() {
     return sql.unsafe`INSERT INTO task (title, rank) VALUES (${payload.title}, ${payload.rank})`;
   }
 
+  function updateTitle(id: string, title: string) {
+    return sql.unsafe`UPDATE task SET title = ${title} WHERE id = ${id}`;
+  }
+
   return {
     rankOfTask,
     addRank,
@@ -59,6 +63,7 @@ function TaskQueryBuilder() {
     adjacentIdAbove,
     page,
     insert,
+    updateTitle,
   };
 }
 
@@ -115,5 +120,9 @@ export function TaskService(db: DatabasePoolConnection) {
     }
   }
 
-  return { fetchPage, create };
+  async function updateTitle(payload: { id: string; title: string }) {
+    await db.query(query.updateTitle(payload.id, payload.title));
+  }
+
+  return { fetchPage, create, updateTitle };
 }

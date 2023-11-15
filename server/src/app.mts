@@ -56,3 +56,21 @@ app.post(
     res.send("OK");
   })
 );
+
+app.post(
+  "/api/tasks/update-title",
+  asyncHandler(async (req, res) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      title: z.string(),
+    });
+    const body = bodySchema.parse(req.body);
+
+    await pool.connect(async (db) => {
+      const taskService = TaskService(db);
+      await taskService.updateTitle(body);
+    });
+
+    res.send("OK");
+  })
+);
