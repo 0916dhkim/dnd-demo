@@ -44,7 +44,7 @@ function TaskQueryBuilder() {
 
     return sql.type(
       taskSchema
-    )`SELECT * FROM task ${whereFragment} ORDER BY rank`;
+    )`SELECT * FROM task ${whereFragment} ORDER BY rank FETCH FIRST 5 ROWS ONLY`;
   }
 
   function insert(payload: { title: ValueExpression; rank: ValueExpression }) {
@@ -82,7 +82,7 @@ export function TaskService(db: DatabasePoolConnection) {
       data: data.rows,
       pageInfo: {
         hasNextPage: data.rowCount !== 0,
-        endCursor: data.rows[data.rowCount - 1]?.rank,
+        endCursor: data.rows[data.rowCount - 1]?.id,
       },
     };
   }
