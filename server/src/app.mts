@@ -74,3 +74,21 @@ app.post(
     res.send("OK");
   })
 );
+
+app.post(
+  "/api/tasks/change-order",
+  asyncHandler(async (req, res) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      beforeId: z.string().nullish(),
+    });
+    const body = bodySchema.parse(req.body);
+
+    await pool.connect(async (db) => {
+      const taskService = TaskService(db);
+      await taskService.changeOrder(body);
+    });
+
+    res.send("OK");
+  })
+);

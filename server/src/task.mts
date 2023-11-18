@@ -55,6 +55,10 @@ function TaskQueryBuilder() {
     return sql.unsafe`UPDATE task SET title = ${title} WHERE id = ${id}`;
   }
 
+  function updateRank(id: string, rank: ValueExpression) {
+    return sql.unsafe`UPDATE task SET rank = ${rank} WHERE id = ${id}`;
+  }
+
   return {
     rankOfTask,
     addRank,
@@ -64,6 +68,7 @@ function TaskQueryBuilder() {
     page,
     insert,
     updateTitle,
+    updateRank,
   };
 }
 
@@ -83,46 +88,53 @@ export function TaskService(db: DatabasePoolConnection) {
   }
 
   async function create(payload: { beforeId?: string | null; title: string }) {
-    if (payload.beforeId == null) {
-      const maxTaskId = await db.maybeOneFirst(query.maxId());
-      if (maxTaskId == null) {
-        await db.query(query.insert({ title: payload.title, rank: 0.5 }));
-      } else {
-        await db.query(
-          query.insert({
-            title: payload.title,
-            rank: query.addRank(query.rankOfTask(maxTaskId), 1),
-          })
-        );
-      }
-    } else {
-      const adjacentId = await db.maybeOneFirst(
-        query.adjacentIdAbove(payload.beforeId)
-      );
-      if (adjacentId == null) {
-        await db.query(
-          query.insert({
-            title: payload.title,
-            rank: query.averageRank(0, query.rankOfTask(payload.beforeId)),
-          })
-        );
-      } else {
-        await db.query(
-          query.insert({
-            title: payload.title,
-            rank: query.averageRank(
-              query.rankOfTask(payload.beforeId),
-              query.rankOfTask(adjacentId)
-            ),
-          })
-        );
-      }
-    }
+    await db.query(
+      query.insert({
+        title: payload.title,
+        rank: await nextRankExpression(payload.beforeId),
+      })
+    );
   }
 
   async function updateTitle(payload: { id: string; title: string }) {
     await db.query(query.updateTitle(payload.id, payload.title));
   }
 
-  return { fetchPage, create, updateTitle };
+  async function changeOrder(payload: {
+    id: string;
+    beforeId?: string | null;
+  }) {
+    await db.query(
+      query.updateRank(payload.id, await nextRankExpression(payload.beforeId))
+    );
+  }
+
+  /**
+   * Build an SQL expression that calculates the rank value
+   * between beforeId and the adjacent task.
+   */
+  async function nextRankExpression(beforeId?: string | null) {
+    if (beforeId == null) {
+      const maxTaskId = await db.maybeOneFirst(query.maxId());
+      if (maxTaskId == null) {
+        return 0.5;
+      } else {
+        return query.addRank(query.rankOfTask(maxTaskId), 1);
+      }
+    } else {
+      const adjacentId = await db.maybeOneFirst(
+        query.adjacentIdAbove(beforeId)
+      );
+      if (adjacentId == null) {
+        return query.averageRank(0, query.rankOfTask(beforeId));
+      } else {
+        return query.averageRank(
+          query.rankOfTask(beforeId),
+          query.rankOfTask(adjacentId)
+        );
+      }
+    }
+  }
+
+  return { fetchPage, create, updateTitle, changeOrder };
 }
