@@ -29,6 +29,11 @@ RUN apt-get -y update --no-install-recommends \
     && apt-get autoremove -y \
     && apt-get clean -y
 
+# Enable pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
 # Create the user.
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
