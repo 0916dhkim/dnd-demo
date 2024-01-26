@@ -1,10 +1,10 @@
-# Use postgres/example user/password credentials
 version: "3.9"
 
 x-environment: &default-environment
   POSTGRES_USER: vscode
   POSTGRES_PASSWORD: notsecure
   POSTGRES_DB: demo
+  DATABASE_URL: postres://vscode:notsecure@db/demo
 
 services:
   app:
