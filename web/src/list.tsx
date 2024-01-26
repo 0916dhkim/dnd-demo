@@ -28,6 +28,9 @@ export function List() {
   return (
     <div>
       <p>Infinite query has {data?.length ?? 0} items.</p>
+
+      {data?.map((task) => <p key={task.id}>{task.title}</p>)}
+
       <button onClick={() => fetchNextPage()}>Fetch more</button>
     </div>
   );
