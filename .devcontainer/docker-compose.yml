@@ -1,0 +1,40 @@
+# Use postgres/example user/password credentials
+version: "3.9"
+
+x-environment: &default-environment
+  POSTGRES_USER: vscode
+  POSTGRES_PASSWORD: notsecure
+  POSTGRES_DB: demo
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    environment:
+      <<: *default-environment
+      PORT: 3000
+    ports:
+      - 3000:3000
+      - 5173:5173
+    volumes:
+      - ..:/workspace
+    user: vscode
+    command: sleep infinity
+  db:
+    image: postgres
+    restart: unless-stopped
+    environment: *default-environment
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../postgresql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+volumes:
+  pgdata:
